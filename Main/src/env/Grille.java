@@ -54,7 +54,15 @@ public class Grille {
     	}
     	return null;
 	}
-    public void move(Agent a, Direction d)
+    public int getN()
+	{
+		return N;
+	}
+	public int getM()
+	{
+		return M;
+	}
+	public void move(Agent a, Direction d)
     {
 
     }
