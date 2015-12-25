@@ -1,6 +1,7 @@
 package agents;
 
 import java.awt.Point;
+import java.util.Map;
 import java.util.Random;
 
 import env.Caisse;
@@ -8,7 +9,6 @@ import env.Case;
 import env.Direction;
 import env.Grille;
 import env.Voisinage;
-
 public class Agent implements Runnable, Case
 {
 	private Memoire memoire;
@@ -90,12 +90,24 @@ public class Agent implements Runnable, Case
 		return res;
 	}
 
-	public float calculPdepot(Voisinage voisinage)
+	public float calculPdepot(Voisinage voisinage,String typeCaisse)
     {
+    	int fd=0;
     	float res=0;
     	if(voisinage!=null && voisinage instanceof Voisinage)
     	{
-    	
+    		Map<Direction,Case> voisins=voisinage.getVoisins();
+    		for(Direction directionVoisines:voisins.keySet())
+    		{
+    			if(voisins.get(directionVoisines) instanceof Caisse &&
+    					((Caisse)voisins.get(directionVoisines)).getLabel()==typeCaisse)
+    			{
+    				fd++;
+    			}
+    		}
+    	}
+    	res=(float) (fd/(this.kDepot+fd));
+    	return res;
     }
 
 	@Override

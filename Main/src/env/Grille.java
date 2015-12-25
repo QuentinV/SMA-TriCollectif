@@ -62,8 +62,25 @@ public class Grille {
 	{
 		return M;
 	}
-	public void move(Agent a, Direction d)
+	public void move(Agent a, Point nextPosition)
     {
-
+		if(nextPosition.x>N-1 || nextPosition.y>M-1)
+		{
+			System.out.println("En dehors des limites du tableau je bouges pas");
+			return;
+		}
+		else
+		{
+			if(matrice[nextPosition.x][nextPosition.y]==null)
+			{
+				System.out.println("je bouge");
+				matrice[a.getPosition(this).x][a.getPosition(this).y]=null;
+				matrice[nextPosition.x][nextPosition.y]=a;
+			}
+			else
+			{
+				System.out.println("il y a une autre entité devant je peux pas me déplacer");
+			}
+		}
     }
 }
