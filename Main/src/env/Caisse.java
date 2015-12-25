@@ -1,8 +1,10 @@
 package env;
 
+import java.awt.Point;
+
 public class Caisse implements Case {
     private String label;
-
+    
     public Caisse(String label)
     {
         this.label = label;
@@ -18,4 +20,9 @@ public class Caisse implements Case {
     {
         return label;
     }
+
+	public Point getPosition(Grille grille)
+	{
+		return grille.getPosition(this);
+	}
 }
