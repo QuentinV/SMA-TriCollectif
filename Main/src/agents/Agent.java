@@ -9,16 +9,16 @@ import env.Case;
 import env.Direction;
 import env.Grille;
 import env.Voisinage;
-public class Agent implements Runnable, Case
+public class Agent extends Case implements Runnable
 {
 	private Memoire memoire;
-	private Point nextPosition;
 	private double kPrise, kDepot;
 	private Grille grille;
 
-	public Agent(int sizeMem, double kPrise, double kDepot, Grille grille)
+	public Agent(String label, int sizeMem, double kPrise, double kDepot, Grille grille)
 	{
-		this.grille = grille;
+        super(label);
+        this.grille = grille;
 		this.kPrise = kPrise;
 		this.kDepot = kDepot;
 		this.memoire = new Memoire(sizeMem);
@@ -36,46 +36,56 @@ public class Agent implements Runnable, Case
 			switch (orientation)
 			{
 
-			case 0:
-				if (getPosition(grille).x < grille.getN()-1)
-				{
-					do
-					{
-					point = new Point(getPosition(grille).x+ grille.getNumberInDirection(Direction.Nord).x,
-						getPosition(grille).y+ grille.getNumberInDirection(Direction.Nord).y);
-					}while(point.x>grille.getN()-1);
-				}
-			case 1:
-				if (getPosition(grille).x > 0)
-				{
-					do
-					{
-						point = new Point(getPosition(grille).x+ grille.getNumberInDirection(Direction.Sud).x,
-								getPosition(grille).y+ grille.getNumberInDirection(Direction.Sud).y);
-					}while(point.x < 0);
-				}
-			case 2:
-				if (getPosition(grille).y < grille.getM()-1)
-				{
-					do
-					{
-						point = new Point(getPosition(grille).x+ grille.getNumberInDirection(Direction.Est).x,
-								getPosition(grille).y+ grille.getNumberInDirection(Direction.Est).y);
-					}while(point.y>grille.getM()-1);
-				}
-			case 3:
-				if (getPosition(grille).y > 0)
-				{
-					do
-					{
-						point = new Point(getPosition(grille).x+ grille.getNumberInDirection(Direction.Ouest).x,
-								getPosition(grille).y+ grille.getNumberInDirection(Direction.Ouest).y);
-					}while(point.y<0);
-				}
-			}
+                case 0:
+                    if (getPosition(grille).x < grille.getN()-1)
+                    {
+                        do
+                        {
+                            point = new Point(
+                                    getPosition(grille).x+ grille.getNumberInDirection(Direction.Nord).x,
+                                    getPosition(grille).y+ grille.getNumberInDirection(Direction.Nord).y
+                            );
+                        }while(point.x>grille.getN()-1);
+                    }
+                    break;
+                case 1:
+                    if (getPosition(grille).x > 0)
+                    {
+                        do
+                        {
+                            point = new Point(
+                                    getPosition(grille).x+ grille.getNumberInDirection(Direction.Sud).x,
+                                    getPosition(grille).y+ grille.getNumberInDirection(Direction.Sud).y
+                            );
+                        }while(point.x < 0);
+                    }
+                    break;
+                case 2:
+                    if (getPosition(grille).y < grille.getM()-1)
+                    {
+                        do
+                        {
+                            point = new Point(getPosition(grille).x+ grille.getNumberInDirection(Direction.Est).x,
+                                    getPosition(grille).y+ grille.getNumberInDirection(Direction.Est).y);
+                        }while(point.y>grille.getM()-1);
+                    }
+                    break;
+                case 3:
+                    if (getPosition(grille).y > 0)
+                    {
+                        do
+                        {
+                            point = new Point(getPosition(grille).x+ grille.getNumberInDirection(Direction.Ouest).x,
+                                    getPosition(grille).y+ grille.getNumberInDirection(Direction.Ouest).y);
+                        }while(point.y<0);
+                    }
+                    break;
+                default:
+                    break;
+            }
 		} while (point == null);
-		this.nextPosition=point;
-		return nextPosition;
+
+		return point;
 	}
 
 	public float calculPprise(Case nextCase)
@@ -90,23 +100,28 @@ public class Agent implements Runnable, Case
 		return res;
 	}
 
-	public float calculPdepot(Voisinage voisinage,String typeCaisse)
+	public double calculPdepot(Voisinage voisinage,String typeCaisse)
     {
-    	int fd=0;
-    	float res=0;
-    	if(voisinage!=null && voisinage instanceof Voisinage)
+        double fd=0;
+        double res=0;
+
+        if(voisinage!=null && voisinage instanceof Voisinage)
     	{
     		Map<Direction,Case> voisins=voisinage.getVoisins();
-    		for(Direction directionVoisines:voisins.keySet())
+    		for(Map.Entry<Direction, Case> e : voisins.entrySet())
     		{
-    			if(voisins.get(directionVoisines) instanceof Caisse &&
-    					((Caisse)voisins.get(directionVoisines)).getLabel()==typeCaisse)
+                Case c = e.getValue();
+    			if(c instanceof Caisse &&
+    					((Caisse)c).getLabel().contentEquals(typeCaisse))
     			{
     				fd++;
     			}
     		}
     	}
-    	res=(float) (fd/(this.kDepot+fd));
+
+    	res = (fd / (this.kDepot + fd));
+        res = Math.pow(res, 2);
+
     	return res;
     }
 
@@ -114,8 +129,14 @@ public class Agent implements Runnable, Case
 	public void run()
 	{
 		// a mettre avant d'effectuer le traitement sur les
-		Case nextCase = grille.checkCaisseNextPoint(nextPosition);
-	}
+		//Case nextCase = grille.checkCaisseNextPoint(nextPosition());
+
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
 
 	@Override
 	public Point getPosition(Grille grille)
