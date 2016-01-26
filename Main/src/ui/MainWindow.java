@@ -1,13 +1,28 @@
 package ui;
 
-import env.Case;
-import env.Grille;
-
-import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.HeadlessException;
+import java.awt.Panel;
+import java.awt.Point;
 import java.util.Observable;
 import java.util.Observer;
+
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.WindowConstants;
+import javax.swing.border.EmptyBorder;
+
+import env.Case;
+import env.Grille;
 
 public class MainWindow extends JFrame implements Observer {
     private final Grille modGrille;

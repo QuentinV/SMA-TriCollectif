@@ -14,6 +14,8 @@ public class Agent extends Case implements Runnable
 	private Memoire memoire;
 	private double kPrise, kDepot;
 	private Grille grille;
+	private Caisse maCaisse;
+	private int orientation;
 
 	public Agent(String label, int sizeMem, double kPrise, double kDepot, Grille grille)
 	{
@@ -32,12 +34,17 @@ public class Agent extends Case implements Runnable
 			// prend position courante+random nord sud est ouest avec
 			// deplacement en fonction de i de grille
 			Random rand = new Random();
-			int orientation = rand.nextInt(4);
+			orientation = rand.nextInt(4);
+			int offset=0;
+			if(maCaisse!=null)
+			{
+				offset=1;
+			}
 			switch (orientation)
 			{
 
                 case 0:
-                    if (getPosition(grille).x < grille.getN()-1)
+                    if (getPosition(grille).x < grille.getN()-1-offset)
                     {
                         do
                         {
@@ -45,11 +52,11 @@ public class Agent extends Case implements Runnable
                                     getPosition(grille).x+ grille.getNumberInDirection(Direction.Nord).x,
                                     getPosition(grille).y+ grille.getNumberInDirection(Direction.Nord).y
                             );
-                        }while(point.x>grille.getN()-1);
+                        }while(point.x>grille.getN()-1-offset);
                     }
                     break;
                 case 1:
-                    if (getPosition(grille).x > 0)
+                    if (getPosition(grille).x > 0+offset)
                     {
                         do
                         {
@@ -57,27 +64,27 @@ public class Agent extends Case implements Runnable
                                     getPosition(grille).x+ grille.getNumberInDirection(Direction.Sud).x,
                                     getPosition(grille).y+ grille.getNumberInDirection(Direction.Sud).y
                             );
-                        }while(point.x < 0);
+                        }while(point.x < 0+offset);
                     }
                     break;
                 case 2:
-                    if (getPosition(grille).y < grille.getM()-1)
+                    if (getPosition(grille).y < grille.getM()-1-offset)
                     {
                         do
                         {
                             point = new Point(getPosition(grille).x+ grille.getNumberInDirection(Direction.Est).x,
                                     getPosition(grille).y+ grille.getNumberInDirection(Direction.Est).y);
-                        }while(point.y>grille.getM()-1);
+                        }while(point.y>grille.getM()-1-offset);
                     }
                     break;
                 case 3:
-                    if (getPosition(grille).y > 0)
+                    if (getPosition(grille).y > 0+offset)
                     {
                         do
                         {
                             point = new Point(getPosition(grille).x+ grille.getNumberInDirection(Direction.Ouest).x,
                                     getPosition(grille).y+ grille.getNumberInDirection(Direction.Ouest).y);
-                        }while(point.y<0);
+                        }while(point.y<0+offset);
                     }
                     break;
                 default:
@@ -87,7 +94,28 @@ public class Agent extends Case implements Runnable
 
 		return point;
 	}
-
+	public Point nextPosition(Caisse caisse,int orientation,Point nextPosition)
+	{
+		switch(orientation)
+		{
+			case 0:
+			if(this.grille.checkCaisseNextPoint(new Point(nextPosition.x+1,nextPosition.y))==null)
+				{return new Point(nextPosition.x+1,nextPosition.y);}
+			break;
+			case 1:
+			if(this.grille.checkCaisseNextPoint(new Point(nextPosition.x-1,nextPosition.y))==null)
+				{return new Point(nextPosition.x-1,nextPosition.y);}
+			break;
+			case 2:
+			if(this.grille.checkCaisseNextPoint(new Point(nextPosition.x,nextPosition.y+1))==null)
+				{return new Point(nextPosition.x,nextPosition.y+1);}
+			break;
+			case 3:
+			if(this.grille.checkCaisseNextPoint(new Point(nextPosition.x,nextPosition.y-1))==null)
+				{return new Point(nextPosition.x,nextPosition.y-1);}
+		}
+		return null;
+	}
 	public float calculPprise(Case nextCase)
 	{
 		float res = 0;
@@ -132,6 +160,32 @@ public class Agent extends Case implements Runnable
 		//Case nextCase = grille.checkCaisseNextPoint(nextPosition());
 
         try {
+        	Point point=this.nextPosition();
+        	Case caseCheck=this.grille.checkCaisseNextPoint(point);
+        	//si j'ai pas de caisse
+        	if(maCaisse==null)
+        	{
+	        	//si la case est vide je bouge
+	        	if(caseCheck==null)
+	        	{
+	        		this.grille.move(this, point);
+	        	}
+	        	//si c'est une caisse je la prend
+	        	else if(caseCheck instanceof Caisse)
+	        	{
+	        		this.maCaisse=(Caisse)caseCheck;
+	        	}
+        	}
+        	//si j'ai une caisse
+        	else
+        	{
+        		Point nextPosCaisse=this.nextPosition(maCaisse, orientation,point);
+        		if(nextPosCaisse!=null)
+        		{
+        			this.grille.move(this, point, nextPosCaisse, maCaisse);
+        		}
+        	}
+        	//sinon je dors tout de suite
             Thread.sleep(2000);
         } catch (InterruptedException e) {
             e.printStackTrace();

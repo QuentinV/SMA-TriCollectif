@@ -1,12 +1,12 @@
 package env;
 
-import agents.Agent;
-
-import java.awt.*;
+import java.awt.Point;
 import java.util.Random;
 
+import agents.Agent;
+
 public class Grille {
-    private Case[][] matrice; //Agent, Caisse ou null
+    private Case[][] matrice; //Agent, Caisse ,Liste de caisse ou null
 
     private final int N;
     private final int M;
@@ -81,7 +81,7 @@ public class Grille {
 
 	public synchronized boolean move(Agent a, Point nextPosition)
     {
-		if(nextPosition.x > N-1 || nextPosition.y > M-1)
+		if(nextPosition.x > N-1 || nextPosition.y > M-1 || nextPosition.x<0 || nextPosition.y<0)
 		{
 			System.out.println("En dehors des limites du tableau je bouges pas");
 			return false;
@@ -106,4 +106,37 @@ public class Grille {
 
         return false;
     }
+	public synchronized boolean move(Agent a,Point nextPositionAgent,Point nextPositionCaisse,Caisse maCaisse)
+	{
+		if(nextPositionCaisse.x > N-1 || nextPositionCaisse.y > M-1 || nextPositionCaisse.x<0 || nextPositionCaisse.y<0)
+		{
+			System.out.println("En dehors des limites du tableau je bouges pas");
+			return false;
+		}
+		if(nextPositionAgent.x > N-1 || nextPositionAgent.y > M-1 || nextPositionAgent.x<0 || nextPositionAgent.y<0)
+		{
+			System.out.println("En dehors des limites du tableau je bouges pas");
+			return false;
+		}
+		else
+		{
+			if(matrice[nextPositionCaisse.x][nextPositionCaisse.y] == null)
+			{
+				System.out.println("je bouge avec ma caisse");
+
+                Point p = this.getPosition(a);
+				matrice[p.x][p.y] = null;
+				matrice[nextPositionAgent.x][nextPositionAgent.y] = a;
+				Point pc=this.getPosition(maCaisse);
+				matrice[pc.x][pc.y]=null;
+				matrice[nextPositionCaisse.x][nextPositionCaisse.y]=maCaisse;
+			}
+			else
+			{
+				System.out.println("il y a une autre entité devant je peux pas me déplacer");
+                return false;
+			}
+		}
+		return false;
+	}
 }
