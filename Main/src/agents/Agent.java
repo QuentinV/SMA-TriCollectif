@@ -169,9 +169,10 @@ public class Agent extends Case implements Runnable
 	        	if(caseCheck==null)
 	        	{
 	        		this.grille.move(this, point);
+	        		this.memoire.add("N");//pour null
 	        	}
-	        	//si c'est une caisse je la prend
-	        	else if(caseCheck instanceof Caisse)
+	        	//si c'est une caisse je la prend en fonction de pprise(à finir)
+	        	else if(caseCheck instanceof Caisse && this.calculPprise(caseCheck)>0.5)
 	        	{
 	        		this.maCaisse=(Caisse)caseCheck;
 	        	}
@@ -183,6 +184,11 @@ public class Agent extends Case implements Runnable
         		if(nextPosCaisse!=null)
         		{
         			this.grille.move(this, point, nextPosCaisse, maCaisse);
+        		}
+        		else
+        			// j'avance et dépose dans une liste de caisse en fonction de pdepot et si le label correspond(à faire)
+        		{
+        			this.maCaisse=null;
         		}
         	}
         	//sinon je dors tout de suite
