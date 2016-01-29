@@ -1,8 +1,8 @@
 package env;
 
-import java.awt.Point;
+import java.util.Observable;
 
-public abstract class Case {
+public abstract class Case extends Observable {
 	protected String label;
 
     public Case(String label) {

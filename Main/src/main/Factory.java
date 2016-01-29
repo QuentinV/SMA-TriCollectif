@@ -29,11 +29,7 @@ public class Factory {
 
     protected Agent createAgent()
     {
-        String name = "R"+String.valueOf(agents.size());
-        if (name.length() == 2)
-            name += " ";
-
-        Agent a = new Agent(name, sizeMem, kPrise, kDepot, grille);
+        Agent a = new Agent(String.valueOf(agents.size()), sizeMem, kPrise, kDepot, grille);
         agents.add(a);
 
         return a;
@@ -43,6 +39,7 @@ public class Factory {
     {
         LinkedList<Point> points = new LinkedList<>();
 
+        //Ajout de tous les points dans la list pour suppression au fur et à mesure
         for (int x = 0; x < grille.getN(); x++)
             for (int y = 0; y < grille.getM(); y++)
                 points.add(new Point(x, y));
@@ -51,6 +48,7 @@ public class Factory {
 
         for (int i = 0; i < nbAgents; ++i)
         {
+            // Selection points aleatoire pour creer agent
             int rand = r.nextInt(points.size());
             Point p = points.get(rand);
             points.remove(rand);
@@ -62,12 +60,13 @@ public class Factory {
 
         for (int i = 0; i < nbCaisse; ++i)
         {
+            // Selection points aleatoire pour creer caisse
             int rand = r.nextInt(points.size());
             Point p = points.get(rand);
             points.remove(rand);
 
             int randLabel = r.nextInt(2);
-            String label = (randLabel == 0) ? " A " : " B ";
+            String label = (randLabel == 0) ? "A" : "B"; // type aleatoire
 
             grille.addCaseAtPos(new Caisse(label), p);
         }

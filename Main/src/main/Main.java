@@ -3,6 +3,8 @@ package main;
 import agents.Agent;
 import env.Grille;
 import ui.Console;
+import ui.Controller;
+import ui.MainWindow;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,32 +14,15 @@ public class Main {
     {
         float kprise = (float) 0.1;
         float kdepot = (float) 0.3;
-        int nbAgents = 1, nbObjects = 30, mem = 5; //20 , 200, 10
+        int nbAgents = 20, nbObjects = 200, mem = 10;
 
-        Grille g = new Grille(20, 20, 1); //50, 50
+        Grille g = new Grille(50, 50, 1);
 
-        Factory f = new Factory(g, nbAgents, nbObjects, mem, kprise, kdepot);
-        List<Thread> tAgents = new ArrayList<>();
-        List<Agent> agents = f.creationAgents();
+        Agent.REFRESH_TIME = 50; //ms
 
-        Console console = new Console(g);
-        console.println();
+        MainWindow mw = new MainWindow(g);
+        mw.addController(new Controller(mw, nbAgents, kprise, kdepot, nbObjects, mem));
 
-        //Demarrer tous les agents
-        for (Agent a : agents) {
-            Thread t = new Thread(a);
-            tAgents.add(t);
-            t.start();
-        }
-
-        for (;;)
-        {
-            console.println();
-            try {
-                Thread.sleep(2000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
+        mw.setVisible(true);
     }
 }

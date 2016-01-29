@@ -108,29 +108,19 @@ public class Grille {
 	public synchronized boolean move(Agent a, Point nextPosition)
     {
 		if(nextPosition.x > N-1 || nextPosition.y > M-1 || nextPosition.x<0 || nextPosition.y<0)
-		{
-			//System.out.println("En dehors des limites du tableau je bouges pas");
 			return false;
-		}
-		else
-		{
-			if(matrice[nextPosition.x][nextPosition.y] == null)
-			{
-				//System.out.println("je bouge");
 
-                Point p = this.getPosition(a);
+        if(matrice[nextPosition.x][nextPosition.y] == null)
+        {
+            Point p = this.getPosition(a);
 
-				matrice[p.x][p.y] = null;
-				matrice[nextPosition.x][nextPosition.y] = a;
+            matrice[p.x][p.y] = null;
+            matrice[nextPosition.x][nextPosition.y] = a;
 
-                return true;
-			}
-			else
-			{
-				//System.out.println("il y a une autre entité devant je peux pas me déplacer");
-                return false;
-			}
-		}
+            return true;
+        }
+
+        return false;
     }
 
 }

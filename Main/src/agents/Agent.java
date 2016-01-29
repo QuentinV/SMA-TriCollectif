@@ -6,24 +6,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import env.Caisse;
-import env.Case;
-import env.Direction;
-import env.Grille;
-import env.Voisinage;
+import env.*;
 
 public class Agent extends Case implements Runnable
 {
-    public static int REFRESH_TIME = 1000;
+    public static int REFRESH_TIME = 10;
     private final Grille grille;
 
 	private Memoire memoire;
 	private double kPrise, kDepot;
 
-	private Caisse maCaisse;
-    private int orientation;
+	private Caisse maCaisse; // Caisse transporter par l'agent
+    public Caisse getMaCaisse() {
+        return maCaisse;
+    }
 
-	public Agent(String label, int sizeMem, double kPrise, double kDepot, Grille grille)
+    public Agent(String label, int sizeMem, double kPrise, double kDepot, Grille grille)
 	{
         super(label);
         this.grille = grille;
@@ -38,7 +36,7 @@ public class Agent extends Case implements Runnable
 
         Point posMe = grille.getPosition(this);
 
-        int nbMove = rand.nextInt(grille.getI())+1; //Nombre de case à bouger
+        int nbMove = rand.nextInt(grille.getI())+1; //Nombre de case à bouger en fonction du param I de la grille
 
         Point nextPos = posMe;
         for (int i = 0; i < nbMove; ++i)
@@ -49,21 +47,15 @@ public class Agent extends Case implements Runnable
             {
                 List<Point> voisins = new ArrayList<>();
                 for (Map.Entry<Direction, Voisinage.Voisin> e : v.getVoisins().entrySet())
-                    if (e.getValue().getC() != null && maCaisse == null && e.getValue().getC() instanceof Caisse)
-                    {
-                        int pPrise = (int)(calculPPrise(e.getValue().getC()) * 100);
-                        if (rand.nextInt(100) <= pPrise)
-                        { // Youpi je le prends
-                            voisins.clear();
-                            voisins.add(e.getValue().getP());
-                            System.out.println("J'ai prit une caisse");
-                            break;
-                        }
-                    } else
+                {
+                    // Ne prendre que les vides
+                    if (e.getValue().getC() == null)
                         voisins.add(e.getValue().getP());
+                }
 
                 // aller sur une case voisine vide aléatoire
-                nextPos = voisins.get(rand.nextInt(voisins.size()));
+                if (voisins.size() > 0)
+                    nextPos = voisins.get(rand.nextInt(voisins.size()));
             } else
                 break; // aucune case libre
         }
@@ -71,14 +63,15 @@ public class Agent extends Case implements Runnable
         return nextPos;
     }
 
-	public float calculPPrise(Case nextCase)
+	public float calculPPrise(Case c)
 	{
 		float res = 0;
 
-		if (nextCase != null && nextCase instanceof Caisse)
+		if (c != null)
 		{
-			double fp = memoire.proportion(nextCase.getLabel());
-			res = (float) (this.kPrise / (this.kPrise + fp));
+			double fp = memoire.proportion(c.getLabel());
+
+            res = (float) (this.kPrise / (this.kPrise + fp));
 		}
 
 		return res;
@@ -89,15 +82,20 @@ public class Agent extends Case implements Runnable
         double fd = 0;
         double res = 0;
 
-        if(voisinage != null && voisinage instanceof Voisinage)
+        if(voisinage != null)
     	{
     		for(Map.Entry<Direction, Voisinage.Voisin> e : voisinage.getVoisins().entrySet())
     		{
                 Case c = e.getValue().getC();
-    			if(c instanceof Caisse && c.getLabel().contentEquals(typeCaisse))
-    				fd++;
+    			if(c != null && c.getLabel().contentEquals(typeCaisse))
+                {
+                    if (c instanceof Caisse)
+                        fd++;
+                    else if (c instanceof TasCaisse)
+                        fd += ((TasCaisse)c).getSize(); // Plusieurs Caisse ..
+                }
     		}
-    	}
+        }
 
     	res = (fd / (this.kDepot + fd));
         res = Math.pow(res, 2);
@@ -115,56 +113,74 @@ public class Agent extends Case implements Runnable
             {
                 Point nextPos = this.nextPos();
                 Case nextCase = grille.getCaseAt(nextPos);
-                //System.out.println(this+" : "+nextPos);
 
-                if (nextCase != null && nextCase instanceof Caisse)
-                { // Prendre la caisse et se déplacer
-                    maCaisse = (Caisse) nextCase;
+                // Bouger
+                boolean hasMoved = false;
+                if (nextCase == null)
+                    hasMoved = grille.move(this, nextPos);
 
-                    grille.cleanCaseAt(nextPos);
-                    if (grille.move(this, nextPos))
-                        memoire.add(maCaisse.getLabel());
+                if (hasMoved)
+                {
+                    // Observer le voisinage pour prendre ou déposer une caisse
+                    Voisinage v = grille.getVoisinage(nextPos);
 
-                    System.out.println("J'ai prit une caisse 2");
-                } else {
-                    // Bouger normalement
-                    boolean hasMoved = false;
-                    if (nextCase == null) {
-                        //System.out.println(this + " : MOVE");
-                        hasMoved = grille.move(this, nextPos);
-                        if (hasMoved)
-                            memoire.add("0");
-                    }
-
-                    // action depot caisse
-                    if (maCaisse != null && hasMoved)
+                    if (maCaisse == null)
                     {
-                        Voisinage v = grille.getVoisinage(nextCase);
+                        for (Map.Entry<Direction, Voisinage.Voisin> e : v.getVoisins().entrySet())
+                        {
+                            // Trouver une caisse à prendre
+                            if (e.getValue().getC() != null
+                                    && (e.getValue().getC() instanceof Caisse || e.getValue().getC() instanceof TasCaisse)) {
+                                int pPrise = (int) (calculPPrise(e.getValue().getC()) * 100);
+                                if (rand.nextInt(100) <= pPrise) { // Youpi je la prends
+                                    if (e.getValue().getC() instanceof Caisse) { // La caisse est toute seule
+                                        maCaisse = (Caisse) e.getValue().getC();
+                                        grille.cleanCaseAt(e.getValue().getP());
+                                    } else { // elle fait partie d'un tas : on retire un element
+                                        TasCaisse tc = (TasCaisse) e.getValue().getC();
+                                        maCaisse = tc.getOneCaisse();
+                                        if (!tc.hasCaisseLeft()) // Quand plus d'element supprimer le tas
+                                            grille.cleanCaseAt(e.getValue().getP());
+                                    }
+
+                                    break;
+                                }
+                            }
+                        }
+
+                        memoire.add(maCaisse != null ? maCaisse.getLabel() : Memoire.EMPTY);
+                    } else
+                    { // action depot caisse
+                        if (hasMoved)
+                            memoire.add(Memoire.EMPTY);
+
                         int pDepot = (int) (calculPDepot(v, maCaisse.getLabel()) * 100);
-                        System.out.println("pDepot = "+pDepot);
-                        // Depot de la caisse
-                        if (rand.nextInt(100) < pDepot) {
+                        if (rand.nextInt(100) < pDepot)
+                        { // Depot de la caisse
                             for (Map.Entry<Direction, Voisinage.Voisin> e : v.getVoisins().entrySet())
-                                if (e.getValue().getC() == null) {
-                                    grille.addCaseAtPos(e.getValue().getC(), e.getValue().getP());
+                            {
+                                if (e.getValue().getC() != null && e.getValue().getC().getLabel().contentEquals(maCaisse.getLabel()))
+                                { // Empiler sur une caisse du même type
+                                    if (e.getValue().getC() instanceof TasCaisse)
+                                        ((TasCaisse) e.getValue().getC()).addOne();
+                                    else // Creer un tas quand ajouté à une caisse
+                                        grille.addCaseAtPos(new TasCaisse(maCaisse.getLabel(), 1), e.getValue().getP());
+
                                     maCaisse = null;
                                     break;
                                 }
-
-                            System.out.println("Je depose ma caisse");
+                            }
                         }
                     }
                 }
+
+                this.setChanged();
+                this.notifyObservers();
 
                 Thread.sleep(REFRESH_TIME);
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-    }
-
-    @Override
-    public String toString() {
-        return super.toString()+(maCaisse != null ? maCaisse : "");
     }
 }

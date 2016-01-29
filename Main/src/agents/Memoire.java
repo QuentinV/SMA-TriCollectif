@@ -2,6 +2,9 @@ package agents;
 
 
 public class Memoire {
+    public static double TAUX_ERREUR = 2;
+    public static String EMPTY = "0";
+
     private String value;
     private int size;
 
@@ -21,7 +24,11 @@ public class Memoire {
 
     public double proportion(String type)
     {
-        return (value.split(type).length-1) / size;
+        // Proportion avec erreur : nb type + TAUX_ERREUR * autre type (sauf 0) / total
+        int nbType = value.split(type).length-1;
+        int nbEmpty = value.split(EMPTY).length-1;
+
+        return (nbType + TAUX_ERREUR * (size - nbType - nbEmpty)) / size;
     }
 
     public String getValue()
