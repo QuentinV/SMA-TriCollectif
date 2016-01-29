@@ -52,29 +52,6 @@ public class Grille {
         matrice[p.x][p.y] = null;
     }
 
-    public Point getNumberInDirection(Direction d)
-	{
-    	if(d!=null)
-    	{
-			Random rand=new Random();
-			//on se deplace de 1 à i+1
-			int nbcase=rand.nextInt(this.i)+1;
-
-			switch(d)
-			{
-                case Nord:
-                    return new Point(nbcase,0);
-                case Sud:
-                    return new Point(-nbcase,0);
-                case Est:
-                    return new Point(0,nbcase);
-                case Ouest:
-                    return new Point(0,-nbcase);
-			}
-    	}
-    	return null;
-	}
-
     public int getN()
 	{
 		return N;
@@ -132,61 +109,28 @@ public class Grille {
     {
 		if(nextPosition.x > N-1 || nextPosition.y > M-1 || nextPosition.x<0 || nextPosition.y<0)
 		{
-			System.out.println("En dehors des limites du tableau je bouges pas");
+			//System.out.println("En dehors des limites du tableau je bouges pas");
 			return false;
 		}
 		else
 		{
 			if(matrice[nextPosition.x][nextPosition.y] == null)
 			{
-				System.out.println("je bouge");
+				//System.out.println("je bouge");
 
                 Point p = this.getPosition(a);
 
 				matrice[p.x][p.y] = null;
 				matrice[nextPosition.x][nextPosition.y] = a;
+
+                return true;
 			}
 			else
 			{
-				System.out.println("il y a une autre entité devant je peux pas me déplacer");
+				//System.out.println("il y a une autre entité devant je peux pas me déplacer");
                 return false;
 			}
 		}
-
-        return false;
     }
 
-	public synchronized boolean move(Agent a,Point nextPositionAgent,Point nextPositionCaisse,Caisse maCaisse)
-	{
-		if(nextPositionCaisse.x > N-1 || nextPositionCaisse.y > M-1 || nextPositionCaisse.x<0 || nextPositionCaisse.y<0)
-		{
-			System.out.println("En dehors des limites du tableau je bouges pas");
-			return false;
-		}
-		if(nextPositionAgent.x > N-1 || nextPositionAgent.y > M-1 || nextPositionAgent.x<0 || nextPositionAgent.y<0)
-		{
-			System.out.println("En dehors des limites du tableau je bouges pas");
-			return false;
-		}
-		else
-		{
-			if(matrice[nextPositionCaisse.x][nextPositionCaisse.y] == null)
-			{
-				System.out.println("je bouge avec ma caisse");
-
-                Point p = this.getPosition(a);
-				matrice[p.x][p.y] = null;
-				matrice[nextPositionAgent.x][nextPositionAgent.y] = a;
-				Point pc=this.getPosition(maCaisse);
-				matrice[pc.x][pc.y]=null;
-				matrice[nextPositionCaisse.x][nextPositionCaisse.y]=maCaisse;
-			}
-			else
-			{
-				System.out.println("il y a une autre entité devant je peux pas me déplacer");
-                return false;
-			}
-		}
-		return false;
-	}
 }

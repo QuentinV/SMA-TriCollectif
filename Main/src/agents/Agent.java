@@ -39,11 +39,9 @@ public class Agent extends Case implements Runnable
         Point posMe = grille.getPosition(this);
 
         int nbMove = rand.nextInt(grille.getI())+1; //Nombre de case à bouger
-        if (maCaisse != null)
-            nbMove--;
 
         Point nextPos = posMe;
-        for (int i = 1; i < nbMove; ++i)
+        for (int i = 0; i < nbMove; ++i)
         {
             Voisinage v = grille.getVoisinage(nextPos);
 
@@ -51,17 +49,15 @@ public class Agent extends Case implements Runnable
             {
                 List<Point> voisins = new ArrayList<>();
                 for (Map.Entry<Direction, Voisinage.Voisin> e : v.getVoisins().entrySet())
-                    if (e.getValue().getC() != null)
+                    if (e.getValue().getC() != null && maCaisse == null && e.getValue().getC() instanceof Caisse)
                     {
-                        if (maCaisse == null && e.getValue().getC() instanceof Caisse)
-                        {
-                            int pPrise = (int)(calculPPrise(e.getValue().getC()) * 100);
-                            if (rand.nextInt(100) <= pPrise)
-                            { // Youpi je le prends
-                                voisins.clear();
-                                voisins.add(e.getValue().getP());
-                                break;
-                            }
+                        int pPrise = (int)(calculPPrise(e.getValue().getC()) * 100);
+                        if (rand.nextInt(100) <= pPrise)
+                        { // Youpi je le prends
+                            voisins.clear();
+                            voisins.add(e.getValue().getP());
+                            System.out.println("J'ai prit une caisse");
+                            break;
                         }
                     } else
                         voisins.add(e.getValue().getP());
@@ -115,45 +111,53 @@ public class Agent extends Case implements Runnable
         Random rand = new Random();
 
         try {
-            Point nextPos = this.nextPos();
-            Case nextCase = grille.getCaseAt(nextPos);
+            for (;;)
+            {
+                Point nextPos = this.nextPos();
+                Case nextCase = grille.getCaseAt(nextPos);
+                //System.out.println(this+" : "+nextPos);
 
-            if (nextCase != null && nextCase instanceof Caisse)
-            { // Prendre la caisse et se déplacer
-                maCaisse = (Caisse) nextCase;
+                if (nextCase != null && nextCase instanceof Caisse)
+                { // Prendre la caisse et se déplacer
+                    maCaisse = (Caisse) nextCase;
 
-                memoire.add(maCaisse.getLabel());
+                    grille.cleanCaseAt(nextPos);
+                    if (grille.move(this, nextPos))
+                        memoire.add(maCaisse.getLabel());
 
-                grille.cleanCaseAt(nextPos);
-                grille.move(this, nextPos);
-            } else {
-                if (maCaisse != null && (nextCase == this || nextCase == null))
-                {
-                    Voisinage v = grille.getVoisinage(nextCase);
-                    int pDepot = (int) (calculPDepot(v, maCaisse.getLabel()) * 100);
-                    if (rand.nextInt(100) < pDepot) {
-                        for (Map.Entry<Direction, Voisinage.Voisin> e : v.getVoisins().entrySet())
-                            if (e.getValue().getC() == null) {
-                                grille.addCaseAtPos(e.getValue().getC(), e.getValue().getP());
-                                maCaisse = null;
-                                break;
-                            }
-                        if (grille.move(this, nextPos))
-                            memoire.add("0");
-                    } else {
-                        List<Voisinage.Voisin> voisins = new ArrayList<>();
-                        for (Map.Entry<Direction, Voisinage.Voisin> e : v.getVoisins().entrySet())
-                            if (e.getValue().getC() == null)
-                                voisins.add(e.getValue());
-
-                        Point next = voisins.get(rand.nextInt(voisins.size())).getP();
-                        if (grille.move(this, next))
+                    System.out.println("J'ai prit une caisse 2");
+                } else {
+                    // Bouger normalement
+                    boolean hasMoved = false;
+                    if (nextCase == null) {
+                        //System.out.println(this + " : MOVE");
+                        hasMoved = grille.move(this, nextPos);
+                        if (hasMoved)
                             memoire.add("0");
                     }
-                }
-            }
 
-            Thread.sleep(REFRESH_TIME);
+                    // action depot caisse
+                    if (maCaisse != null && hasMoved)
+                    {
+                        Voisinage v = grille.getVoisinage(nextCase);
+                        int pDepot = (int) (calculPDepot(v, maCaisse.getLabel()) * 100);
+                        System.out.println("pDepot = "+pDepot);
+                        // Depot de la caisse
+                        if (rand.nextInt(100) < pDepot) {
+                            for (Map.Entry<Direction, Voisinage.Voisin> e : v.getVoisins().entrySet())
+                                if (e.getValue().getC() == null) {
+                                    grille.addCaseAtPos(e.getValue().getC(), e.getValue().getP());
+                                    maCaisse = null;
+                                    break;
+                                }
+
+                            System.out.println("Je depose ma caisse");
+                        }
+                    }
+                }
+
+                Thread.sleep(REFRESH_TIME);
+            }
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

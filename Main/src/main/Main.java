@@ -12,9 +12,9 @@ public class Main {
     {
         float kprise = (float) 0.1;
         float kdepot = (float) 0.3;
-        int nbAgents = 20, nbObjects = 200, mem = 10;
+        int nbAgents = 1, nbObjects = 30, mem = 5; //20 , 200, 10
 
-        Grille g = new Grille(50, 50, 1);
+        Grille g = new Grille(20, 20, 1); //50, 50
 
         Factory f = new Factory(g, nbAgents, nbObjects, mem, kprise, kdepot);
         List<Thread> tAgents = new ArrayList<>();
