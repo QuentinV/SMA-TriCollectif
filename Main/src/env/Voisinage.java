@@ -5,41 +5,38 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Voisinage {
-	Map<Direction,Case> voisins=new HashMap<>();
-	public Voisinage(Grille grille,Case case_position)
+    public static class Voisin {
+        private Case c;
+        private Point p;
+
+        public Voisin(Case c, Point p) {
+            this.c = c;
+            this.p = p;
+        }
+
+        public Case getC() {
+            return c;
+        }
+
+        public Point getP() {
+            return p;
+        }
+    };
+
+	private Map<Direction, Voisin> voisins;
+
+	public Voisinage()
 	{
-		if(case_position.getPosition(grille).x+1<=grille.getN()-1)
-		{
-			Case caseCheck=grille.checkCaisseNextPoint(new Point(case_position.getPosition(grille).x+1,
-					case_position.getPosition(grille).y));
-			voisins.put(Direction.Nord, caseCheck);
-		}
-		if(case_position.getPosition(grille).x-1>=0)
-		{
-			Case caseCheck=grille.checkCaisseNextPoint(new Point(case_position.getPosition(grille).x-1,
-					case_position.getPosition(grille).y));
-			voisins.put(Direction.Sud, caseCheck);
-		}
-		if(case_position.getPosition(grille).y+1<=grille.getM()-1)
-		{
-			Case caseCheck=grille.checkCaisseNextPoint(new Point(case_position.getPosition(grille).x,
-					case_position.getPosition(grille).y+1));
-			voisins.put(Direction.Est, caseCheck);
-		}
-		if(case_position.getPosition(grille).y-1>=0)
-		{
-			Case caseCheck=grille.checkCaisseNextPoint(new Point(case_position.getPosition(grille).x,
-					case_position.getPosition(grille).y-1));
-			voisins.put(Direction.Ouest, caseCheck);
-		}
-	}
-	public Map<Direction, Case> getVoisins()
-	{
-		return voisins;
+	    voisins = new HashMap<>();
 	}
 
-	public void setVoisins(Map<Direction, Case> voisins)
+    public void addVoisin(Direction d, Case c, Point p)
+    {
+        voisins.put(d, new Voisin(c, p));
+    }
+
+	public Map<Direction, Voisin> getVoisins()
 	{
-		this.voisins = voisins;
+		return voisins;
 	}
 }

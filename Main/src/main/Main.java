@@ -1,20 +1,43 @@
 package main;
 
+import agents.Agent;
 import env.Grille;
-import ui.Controller;
-import ui.MainWindow;
+import ui.Console;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class Main {
     public static void main(String[] args)
     {
         float kprise = (float) 0.1;
         float kdepot = (float) 0.3;
+        int nbAgents = 20, nbObjects = 200, mem = 10;
 
-        MainWindow window = new MainWindow(new Grille(50, 50, 1));
-        Controller controller = new Controller(window, 10, kprise, kdepot, 200);
+        Grille g = new Grille(50, 50, 1);
 
-        window.addController(controller);
+        Factory f = new Factory(g, nbAgents, nbObjects, mem, kprise, kdepot);
+        List<Thread> tAgents = new ArrayList<>();
+        List<Agent> agents = f.creationAgents();
 
-        window.setVisible(true);
+        Console console = new Console(g);
+        console.println();
+
+        //Demarrer tous les agents
+        for (Agent a : agents) {
+            Thread t = new Thread(a);
+            tAgents.add(t);
+            t.start();
+        }
+
+        for (;;)
+        {
+            console.println();
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

@@ -9,8 +9,6 @@ public abstract class Case {
         this.label = label;
     }
 
-
-
     public String getLabel() {
         return label;
     }
@@ -19,10 +17,5 @@ public abstract class Case {
     public String toString()
     {
         return label;
-    }
-
-    public Point getPosition(Grille grille)
-    {
-        return grille.getPosition(this);
     }
 }

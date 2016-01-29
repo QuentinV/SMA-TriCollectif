@@ -1,6 +1,8 @@
 package agents;
 
 import java.awt.Point;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
@@ -9,13 +11,17 @@ import env.Case;
 import env.Direction;
 import env.Grille;
 import env.Voisinage;
+
 public class Agent extends Case implements Runnable
 {
+    public static int REFRESH_TIME = 1000;
+    private final Grille grille;
+
 	private Memoire memoire;
 	private double kPrise, kDepot;
-	private Grille grille;
+
 	private Caisse maCaisse;
-	private int orientation;
+    private int orientation;
 
 	public Agent(String label, int sizeMem, double kPrise, double kDepot, Grille grille)
 	{
@@ -26,124 +32,74 @@ public class Agent extends Case implements Runnable
 		this.memoire = new Memoire(sizeMem);
 	}
 
-	public Point nextPosition()
-	{
-		Point point = null;
-		do
-		{
-			// prend position courante+random nord sud est ouest avec
-			// deplacement en fonction de i de grille
-			Random rand = new Random();
-			orientation = rand.nextInt(4);
-			int offset=0;
-			if(maCaisse!=null)
-			{
-				offset=1;
-			}
-			switch (orientation)
-			{
+    public Point nextPos()
+    {
+        Random rand = new Random();
 
-                case 0:
-                    if (getPosition(grille).x < grille.getN()-1-offset)
-                    {
-                        do
-                        {
-                            point = new Point(
-                                    getPosition(grille).x+ grille.getNumberInDirection(Direction.Nord).x,
-                                    getPosition(grille).y+ grille.getNumberInDirection(Direction.Nord).y
-                            );
-                        }while(point.x>grille.getN()-1-offset);
-                    }
-                    break;
-                case 1:
-                    if (getPosition(grille).x > 0+offset)
-                    {
-                        do
-                        {
-                            point = new Point(
-                                    getPosition(grille).x+ grille.getNumberInDirection(Direction.Sud).x,
-                                    getPosition(grille).y+ grille.getNumberInDirection(Direction.Sud).y
-                            );
-                        }while(point.x < 0+offset);
-                    }
-                    break;
-                case 2:
-                    if (getPosition(grille).y < grille.getM()-1-offset)
-                    {
-                        do
-                        {
-                            point = new Point(getPosition(grille).x+ grille.getNumberInDirection(Direction.Est).x,
-                                    getPosition(grille).y+ grille.getNumberInDirection(Direction.Est).y);
-                        }while(point.y>grille.getM()-1-offset);
-                    }
-                    break;
-                case 3:
-                    if (getPosition(grille).y > 0+offset)
-                    {
-                        do
-                        {
-                            point = new Point(getPosition(grille).x+ grille.getNumberInDirection(Direction.Ouest).x,
-                                    getPosition(grille).y+ grille.getNumberInDirection(Direction.Ouest).y);
-                        }while(point.y<0+offset);
-                    }
-                    break;
-                default:
-                    break;
-            }
-		} while (point == null);
+        Point posMe = grille.getPosition(this);
 
-		return point;
-	}
-	public Point nextPosition(Caisse caisse,int orientation,Point nextPosition)
-	{
-		switch(orientation)
-		{
-			case 0:
-			if(this.grille.checkCaisseNextPoint(new Point(nextPosition.x+1,nextPosition.y))==null)
-				{return new Point(nextPosition.x+1,nextPosition.y);}
-			break;
-			case 1:
-			if(this.grille.checkCaisseNextPoint(new Point(nextPosition.x-1,nextPosition.y))==null)
-				{return new Point(nextPosition.x-1,nextPosition.y);}
-			break;
-			case 2:
-			if(this.grille.checkCaisseNextPoint(new Point(nextPosition.x,nextPosition.y+1))==null)
-				{return new Point(nextPosition.x,nextPosition.y+1);}
-			break;
-			case 3:
-			if(this.grille.checkCaisseNextPoint(new Point(nextPosition.x,nextPosition.y-1))==null)
-				{return new Point(nextPosition.x,nextPosition.y-1);}
-		}
-		return null;
-	}
-	public float calculPprise(Case nextCase)
+        int nbMove = rand.nextInt(grille.getI())+1; //Nombre de case à bouger
+        if (maCaisse != null)
+            nbMove--;
+
+        Point nextPos = posMe;
+        for (int i = 1; i < nbMove; ++i)
+        {
+            Voisinage v = grille.getVoisinage(nextPos);
+
+            if (v.getVoisins().size() > 0)
+            {
+                List<Point> voisins = new ArrayList<>();
+                for (Map.Entry<Direction, Voisinage.Voisin> e : v.getVoisins().entrySet())
+                    if (e.getValue().getC() != null)
+                    {
+                        if (maCaisse == null && e.getValue().getC() instanceof Caisse)
+                        {
+                            int pPrise = (int)(calculPPrise(e.getValue().getC()) * 100);
+                            if (rand.nextInt(100) <= pPrise)
+                            { // Youpi je le prends
+                                voisins.clear();
+                                voisins.add(e.getValue().getP());
+                                break;
+                            }
+                        }
+                    } else
+                        voisins.add(e.getValue().getP());
+
+                // aller sur une case voisine vide aléatoire
+                nextPos = voisins.get(rand.nextInt(voisins.size()));
+            } else
+                break; // aucune case libre
+        }
+
+        return nextPos;
+    }
+
+	public float calculPPrise(Case nextCase)
 	{
 		float res = 0;
 
 		if (nextCase != null && nextCase instanceof Caisse)
 		{
-			double fp = memoire.proportion(((Caisse) nextCase).getLabel());
+			double fp = memoire.proportion(nextCase.getLabel());
 			res = (float) (this.kPrise / (this.kPrise + fp));
 		}
+
 		return res;
 	}
 
-	public double calculPdepot(Voisinage voisinage,String typeCaisse)
+	public double calculPDepot(Voisinage voisinage, String typeCaisse)
     {
-        double fd=0;
-        double res=0;
+        double fd = 0;
+        double res = 0;
 
-        if(voisinage!=null && voisinage instanceof Voisinage)
+        if(voisinage != null && voisinage instanceof Voisinage)
     	{
-    		Map<Direction,Case> voisins=voisinage.getVoisins();
-    		for(Map.Entry<Direction, Case> e : voisins.entrySet())
+    		for(Map.Entry<Direction, Voisinage.Voisin> e : voisinage.getVoisins().entrySet())
     		{
-                Case c = e.getValue();
-    			if(c instanceof Caisse &&
-    					((Caisse)c).getLabel().contentEquals(typeCaisse))
-    			{
+                Case c = e.getValue().getC();
+    			if(c instanceof Caisse && c.getLabel().contentEquals(typeCaisse))
     				fd++;
-    			}
     		}
     	}
 
@@ -156,51 +112,55 @@ public class Agent extends Case implements Runnable
 	@Override
 	public void run()
 	{
-		// a mettre avant d'effectuer le traitement sur les
-		//Case nextCase = grille.checkCaisseNextPoint(nextPosition());
+        Random rand = new Random();
 
         try {
-        	Point point=this.nextPosition();
-        	Case caseCheck=this.grille.checkCaisseNextPoint(point);
-        	//si j'ai pas de caisse
-        	if(maCaisse==null)
-        	{
-	        	//si la case est vide je bouge
-	        	if(caseCheck==null)
-	        	{
-	        		this.grille.move(this, point);
-	        		this.memoire.add("N");//pour null
-	        	}
-	        	//si c'est une caisse je la prend en fonction de pprise(à finir)
-	        	else if(caseCheck instanceof Caisse && this.calculPprise(caseCheck)>0.5)
-	        	{
-	        		this.maCaisse=(Caisse)caseCheck;
-	        	}
-        	}
-        	//si j'ai une caisse
-        	else
-        	{
-        		Point nextPosCaisse=this.nextPosition(maCaisse, orientation,point);
-        		if(nextPosCaisse!=null)
-        		{
-        			this.grille.move(this, point, nextPosCaisse, maCaisse);
-        		}
-        		else
-        			// j'avance et dépose dans une liste de caisse en fonction de pdepot et si le label correspond(à faire)
-        		{
-        			this.maCaisse=null;
-        		}
-        	}
-        	//sinon je dors tout de suite
-            Thread.sleep(2000);
+            Point nextPos = this.nextPos();
+            Case nextCase = grille.getCaseAt(nextPos);
+
+            if (nextCase != null && nextCase instanceof Caisse)
+            { // Prendre la caisse et se déplacer
+                maCaisse = (Caisse) nextCase;
+
+                memoire.add(maCaisse.getLabel());
+
+                grille.cleanCaseAt(nextPos);
+                grille.move(this, nextPos);
+            } else {
+                if (maCaisse != null && (nextCase == this || nextCase == null))
+                {
+                    Voisinage v = grille.getVoisinage(nextCase);
+                    int pDepot = (int) (calculPDepot(v, maCaisse.getLabel()) * 100);
+                    if (rand.nextInt(100) < pDepot) {
+                        for (Map.Entry<Direction, Voisinage.Voisin> e : v.getVoisins().entrySet())
+                            if (e.getValue().getC() == null) {
+                                grille.addCaseAtPos(e.getValue().getC(), e.getValue().getP());
+                                maCaisse = null;
+                                break;
+                            }
+                        if (grille.move(this, nextPos))
+                            memoire.add("0");
+                    } else {
+                        List<Voisinage.Voisin> voisins = new ArrayList<>();
+                        for (Map.Entry<Direction, Voisinage.Voisin> e : v.getVoisins().entrySet())
+                            if (e.getValue().getC() == null)
+                                voisins.add(e.getValue());
+
+                        Point next = voisins.get(rand.nextInt(voisins.size())).getP();
+                        if (grille.move(this, next))
+                            memoire.add("0");
+                    }
+                }
+            }
+
+            Thread.sleep(REFRESH_TIME);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
 
-	@Override
-	public Point getPosition(Grille grille)
-	{
-		return grille.getPosition(this);
-	}
+    @Override
+    public String toString() {
+        return super.toString()+(maCaisse != null ? maCaisse : "");
+    }
 }
