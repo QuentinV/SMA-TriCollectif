@@ -18,7 +18,7 @@ public class Main {
 
         Grille g = new Grille(50, 50, 1);
 
-        Agent.REFRESH_TIME = 50; //ms
+        Agent.REFRESH_TIME = 10; //ms
 
         MainWindow mw = new MainWindow(g);
         mw.addController(new Controller(mw, nbAgents, kprise, kdepot, nbObjects, mem));

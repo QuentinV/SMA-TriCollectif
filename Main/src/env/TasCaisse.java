@@ -14,14 +14,9 @@ public class TasCaisse extends Case {
 
     public Caisse getOneCaisse()
     {
-        if (!hasCaisseLeft()) return null;
+        if (size <= 0) return null;
         size--;
         return new Caisse(label);
-    }
-
-    public boolean hasCaisseLeft()
-    {
-        return size > 0;
     }
 
     public void addOne()

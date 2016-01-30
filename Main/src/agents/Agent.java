@@ -139,8 +139,11 @@ public class Agent extends Case implements Runnable
                                     } else { // elle fait partie d'un tas : on retire un element
                                         TasCaisse tc = (TasCaisse) e.getValue().getC();
                                         maCaisse = tc.getOneCaisse();
-                                        if (!tc.hasCaisseLeft()) // Quand plus d'element supprimer le tas
+                                        if (tc.getSize() < 2) // Quand moins de 2 elements supprimer tas
+                                        {
                                             grille.cleanCaseAt(e.getValue().getP());
+                                            grille.addCaseAtPos(new Caisse(tc.getLabel()), e.getValue().getP());
+                                        }
                                     }
 
                                     break;
@@ -164,7 +167,7 @@ public class Agent extends Case implements Runnable
                                     if (e.getValue().getC() instanceof TasCaisse)
                                         ((TasCaisse) e.getValue().getC()).addOne();
                                     else // Creer un tas quand ajouté à une caisse
-                                        grille.addCaseAtPos(new TasCaisse(maCaisse.getLabel(), 1), e.getValue().getP());
+                                        grille.addCaseAtPos(new TasCaisse(maCaisse.getLabel(), 2), e.getValue().getP());
 
                                     maCaisse = null;
                                     break;
